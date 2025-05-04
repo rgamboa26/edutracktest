@@ -1,0 +1,1199 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* ROOT VARIABLES */
+:root {
+    --color-primary: #4556ea;
+    --color-danger: #e5446d;
+    --color-success: #41f1b6;
+    --color-warning: #ffbb55;
+    --color-white: #fff;
+    --color-info-dark: #7d8da1;
+    --color-info-light: #dce1eb;
+    --color-dark: #363949;
+    --color-light: rgba(132, 139, 200, 0.18);
+    --color-primary-variant: #111e88;
+    --color-dark-variant: #677483;
+    --color-background: #FDFDFD;
+
+    --card-border-radius: 2rem;
+    --border-radius-1: 0.4rem;
+    --border-radius-2: 0.8rem;
+    --border-radius-3: 1.2rem;
+
+    --card-padding: 1.8rem;
+    --padding-1: 1.2rem;
+
+    --box-shadow: 0 2rem 3rem var(--color-light);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    outline: 0;
+    appearance: 0;
+    border: 0;
+    text-decoration: none;
+    list-style: none;
+    box-sizing: border-box;
+}
+
+html{
+    font-size: 14px;
+}
+
+body{
+    width: 100vw;
+    height: 100vh;
+    font-family: poppins, sans-serif;
+    font-size: 0.88rem;
+    background: var(--color-background);
+    user-select: none;
+    overflow-x: hidden;
+    color: var(--color-dark)
+}
+
+.container {
+    display: grid;
+    width: 96%;
+    margin: 0 auto;
+    gap: 1.8rem;
+    grid-template-columns: 14rem auto 23rem;
+}
+
+a {
+    color:var(--color-dark);
+}
+
+
+
+h1 {
+    font-size: 100px;
+}
+
+h2 {
+    font-size: 1.4rem;
+}
+
+h3 {
+    font-size: 0.87rem;
+}
+
+h3 {
+    font-size: 0.8rem;
+}
+
+h4 {
+    font-size: 0.8rem;
+}
+
+h5 {
+    font-size: 0.77rem;
+}
+
+small {
+    font-size: 0.75rem;
+}
+
+
+
+.text-muted{
+    color: var(--color-info-dark);
+}
+
+p { 
+    color:var(--color-dark-variant);
+}
+
+b {
+    color: var(--color-dark);
+}
+
+.primary {
+    color: var(--color-primary);
+}
+
+.danger {
+    color: var(--color-primary);
+}
+
+.success {
+    color: var(--color-success);
+}
+
+.warning {
+    color: var(--color-warning);
+}
+
+aside { 
+    height: 100vh;
+}
+
+aside .top {
+    /*---background: white;----------*/
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.4rem;
+}
+
+aside .logo {
+    display: flex;
+    gap: 0.8rem;
+}
+
+aside .logo img {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+aside .close {
+    display: none;
+}
+
+/* ==================SIDEBAR==================== */
+aside .sidebar {
+    /*---background: white;-----*/
+    display: flex;
+    flex-direction: column;
+    height: 86vh;
+    position: relative;
+    top: 3rem;
+}
+
+aside h3 {
+    font-weight: 500;
+}
+
+aside .sidebar a {
+    display: flex;
+    color: var(--color-info-dark);
+    margin-left: 2rem;
+    gap: 1rem;
+    align-items: center;
+    position: relative;
+    height: 3.7rem;
+    transition: all 300ms ease;
+}
+
+aside .sidebar a span {
+    font-size: 1.6rem;
+    transition: all 300ms ease;
+}
+
+aside .sidebar a:last-child {
+    position: absolute;
+    bottom: 2rem;
+    width: 100%;
+}
+
+aside .sidebar a.active {
+    background: var(--color-light);
+    color: var(--color-primary);
+    margin-left: 0;
+}
+
+aside .sidebar a.active:before {
+    content: "";
+    width: 6px;
+    height: 100%;
+    background: var(--color-primary);
+}
+
+aside .sidebar a:hover {
+    color: var(--color-primary);
+}
+
+aside .sidebar a:hover span {
+    margin-left: 1rem;
+}
+
+aside .sidebar .message-count {
+    background: var(--color-danger);
+    color: var(--color-white);
+    padding: 2px 10px;
+    font-size: 11px;
+    border-radius: var(--border-radius-1);
+}
+
+.box {
+    width: 150px;
+    height: auto;
+    border: 3px solid;
+    margin: 10px auto;
+    border-radius: var(--border-radius-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.todo {
+    border-color: var(--color-danger);
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.in-progress {
+    border-color: var(--color-warning);
+    background-color: rgba(255, 165, 0, 0.1);
+}
+
+.completed {
+    border-color: var(--color-success);
+    background-color: rgba(0, 128, 0, 0.1);
+}
+
+.overviewText {
+    margin: 0; 
+    text-align: center;
+}
+
+table td {
+    padding: 10px;
+}
+
+/*============MAIN===============*/
+main {
+    margin-top: 1.4rem;
+}
+
+mul {list-style-type: none;}
+body {font-family: Verdana, sans-serif;}
+/*=================CALENDAR================*/
+/* Month header */
+.month {
+  padding: 70px 25px;
+  width: 100%;
+  background: #e5446d;
+  text-align: center;
+  border-radius: 25px 25px 1px 1px;
+}
+
+/* Month list */
+.month ul {
+  margin: 0;
+  padding: 0;
+  min-width: 20rem;
+}
+
+.month ul li {
+  color: white;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+/* prev button sa calendar */
+.month .prev {
+  float: left;
+  padding-top: 10px;
+}
+
+/* next button */
+.month .next {
+  float: right;
+  padding-top: 10px;
+}
+
+/* weekdays */
+.weekdays {
+  margin: 0;
+  margin-bottom: 10px;
+  padding: 10px 0;
+  background-color:#ddd;
+}
+
+.weekdays li {
+  display: inline-block;
+  margin-left: 3px;
+  width: 10.6%;
+  color: #666;
+  text-align: center;
+}
+
+/* fixed size ng days*/
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 columns for 7 days a week */
+  grid-template-rows: repeat(6, 1fr); /* always 6 rows */
+  gap: 5px; /* space between days */
+  width: 100%; 
+  max-width: 300px; 
+  height: 250px; 
+  overflow: hidden;
+}
+
+.days li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-size: 14px;
+  background-color: #f4f4f4; 
+  width: 100%; 
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+.days li.active {
+  color: var(--color-white);
+  border-radius: 50%;
+}
+
+.calendar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40rem;
+  }
+
+.days li.empty {
+  visibility: hidden; 
+}
+
+.days li.empty {
+    visibility: hidden;
+  }
+  
+  .days li.active {
+    background-color: var(--color-primary);  /*color ng active day*/
+    color: var(--color-white);
+    border-radius: 50%;
+  }
+  
+ul.days li.active {
+  background-color: var(--color-danger); 
+  color: var(--color-white);
+  border-radius: 50%;
+}
+
+/* Calendar Wrapper */
+.calendar-wrapper {
+    width: 100%;
+    max-width: 3000px;
+    margin: 0 auto;
+    padding: 10px;
+    background-color: var(--color-white);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow)
+  }
+
+/* Calendar Header */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.calendar-header h2 {
+    font-size: 1.2rem;
+}
+
+/* Calendar Controls */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.nav-button {
+    font-size: 1rem;
+    padding: 5px 10px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-radius: var(--border-radius-1);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: var(--color-primary-variant);
+}
+
+/* Days of the Week */
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: var(--color-dark);
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    min-height: 50px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px;
+}
+
+/* Highlight date today */
+.calendar-day.today {
+    background-color: var(--color-primary); /* Green background */
+    color: var(--color-white); /* White text */
+    font-weight: bold;
+    border: 2px solid var(--color-dark); /* Optional: Add a border */
+}
+
+.date-number {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.event {
+    font-size: 0.7rem;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-top: 2px;
+    text-align: center;
+}
+
+/* modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: var(--color-white);
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 50%;
+  box-shadow: var(--box-shadow);
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: var(--color-dark);
+}
+
+.modal-content #modal-updates {
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.modal-content p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--color-dark);
+}
+
+.close-button {
+  color: var(--color-danger);
+  float: right;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: var(--color-dark);
+}
+
+/* active day */
+.calendar-day.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-radius: 4px;
+}
+
+/* inactive day */
+.calendar-day.inactive {
+    background-color: #f4f4f4;
+    color: #aaa;
+}
+
+/* hover effect sa calendar */
+.calendar-day:hover {
+    background-color: var(--color-light);
+    cursor: pointer;
+}
+
+/* style for modal(popup) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: var(--color-white);
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 50%;
+  box-shadow: var(--box-shadow);
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: var(--color-dark);
+}
+
+.modal-content #modal-updates {
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.modal-content p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--color-dark);
+}
+
+.close-button {
+  color: var(--color-danger);
+  float: right;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: var(--color-dark);
+}
+
+/*==============END OF CALENDAR===================*/
+main .groupDetails {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.6rem;
+}
+
+main .groupList {
+    line-height: 75px;
+}
+
+main .groupDetails > div {
+    background: var(--color-white);
+    padding: var(--card-padding);
+    border-radius: var(--card-border-radius);
+    margin-top: 1rem;
+    box-shadow: var(--box-shadow);
+    transition: all 300ms ease;
+}
+
+main .groupDetails > div:hover {
+    box-shadow: none;
+}
+
+main .groupDetails > div span {
+    background-color: var(--color-primary);
+    padding: 0.5rem;
+    border-radius: 50%;
+    color: var(--color-white);
+    font-size: 2rem;
+}
+
+main .groupDetails > div.expenses span {
+    background: var(--color-danger);
+}
+
+main .groupDetails > div.members span {
+    background: var(--color-success);
+}
+
+main .groupDetails > div .middle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+main .groupDetails h3 {
+    margin: 1rem 0 0.6rem;
+    font-size: 1rem;
+}
+
+main .groupDetails .progress {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+}
+
+main .groupDetails svg {
+    width: 7rem;
+    height: 7rem;
+}
+
+main .groupDetails svg circle{
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 14;
+    stroke-linecap: round;
+    transform: translate(5px, 5px);
+    stroke-dasharray: 110;
+    stroke-dashoffset: 92;
+}
+
+main .groupDetails .sales svg circle {
+    stroke-dashoffset: -30;
+    stroke-dasharray: 200;
+}
+
+main .groupDetails .expenses svg circle {
+    stroke-dashoffset: 20;
+    stroke-dasharray: 80;
+}
+
+main .groupDetails .income svg circle {
+    stroke-dashoffset: 35;
+    stroke-dasharray: 110;
+}
+
+main .groupDetails .progress .progressNumber {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+main .groupDetails small {
+    margin-top: 1.3rem;
+    display: block;
+}
+
+.members .groupList {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.members .member {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.members .profile-photo {
+    width: 2.8rem; 
+    height: 2.8rem;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1rem;
+    object-fit: cover;
+}
+
+.members .message {
+    flex-grow: 1;
+}
+
+.members .message b {
+    display: block;
+}
+
+.members .message p {
+    margin: 0;
+    color: var(--color-info-dark);
+}
+/*=================RECENT ORDERS================*/
+main .overview {
+    margin-top: 3rem;
+    background: var(--color-white);
+    box-shadow: var(--box-shadow);
+}
+
+
+main .overview h2 {
+    margin-bottom: 0.8rem;
+}
+
+main .overview table {
+    background: var(--color-white);
+    width: 100%;
+    border-radius: var(--card-border-radius);
+    padding: var(--card-padding);
+    text-align: center;
+    transition: all 300ms ease;
+}
+
+main .overview table:hover {
+    box-shadow: none;
+}
+
+main table tbody td {
+    height: 2.8rem;
+    border-left: 1px solid var(--color-light);
+    color: var(--color-dark-variant);
+}
+
+main table tbody tr:last-child td {
+    border: none;
+}
+
+main .overview a{
+    text-align: center;
+    display: block;
+    margin: 1rem auto;
+    color: var(--color-primary);
+}
+
+/*===============RIGHT=================*/
+.right {
+    margin-top: 1.4rem;
+}
+
+.right .top {
+    display: flex;
+    justify-content: end;
+    gap: 2rem;
+}
+
+.right .top button {
+    display: none;
+}
+
+.right .theme-toggler {
+    background: var(--color-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 1.6rem;
+    width: 4.2rem;
+    cursor: pointer;
+    border-radius: var(--border-radius-1);
+}
+
+.right .theme-toggler span {
+    font-size: 1.2rem;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.right .theme-toggler span.active {
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--border-radius-1);
+}
+
+.right .top .profile {
+    display: flex;
+    gap: 2rem;
+    text-align: right;
+}
+
+/*==========RECENT UPDATES===============*/
+.right .recent-updates {
+    margin-top: 1rem;
+}
+
+.right .recent-updates h2 {
+    margin-bottom: 0.8rem;
+}
+
+.right .recent-updates .updates {
+    background: var(--color-white);
+    padding: var(--card-padding);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+    transition: all 300ms ease;
+}
+
+.right .recent-updates .updates:hover {
+    box-shadow: none;
+}
+
+.right .recent-updates .updates .update {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.profile-photo {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    margin: 0;
+}
+
+.text-muted {
+    color: var(--color-info-dark);
+    font-size: 0.9rem;
+    margin-top: 0.2rem; 
+}
+
+
+/*================SETTINGS PAGE===============*/
+main {
+    margin-top: 1.4rem;
+}
+
+.settings-form {
+    background: var(--color-white);
+    padding: var(--card-padding);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+    margin-top: 1rem;
+}
+
+.settings-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.settings-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.settings-form input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--color-light);
+    border-radius: var(--border-radius-1);
+    font-size: 0.88rem;
+}
+
+.settings-form input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+.btn-save {
+    background: var(--color-primary);
+    color: var(--color-white);
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius-2);
+    font-size: 1rem; 
+    cursor: pointer;
+    transition: background 300ms ease, transform 150ms ease;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-save:hover {
+    background: var(--color-primary-variant);
+    transform: scale(1.05);
+}
+
+.btn-save:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(115, 128, 236, 0.5);
+}
+
+.btn-save:active {
+    transform: scale(0.95);
+}
+
+/*==========ACTIONS==========*/
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.task-form, .remove-task {
+    background: var(--color-white);
+    padding: var(--card-padding);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+h1 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    text-align: left;
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--color-light);
+    border-radius: var(--border-radius-1);
+    font-size: 0.88rem;
+}
+
+/* Button styles */
+.btn-save {
+    background: var(--color-primary); 
+    color: var(--color-white);
+    padding: 0.8rem 1.9rem;
+    border: none;
+    border-radius: var(--border-radius-2);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 300ms ease, transform 150ms ease;
+}
+
+
+.btn-remove {
+    background: var(--color-danger);
+    color: var(--color-white);
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius-2);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 300ms ease, transform 150ms ease;
+}
+
+.btn-save:hover {
+    background: var(--color-primary-variant); 
+    transform: scale(1.05);
+}
+
+.btn-remove:hover {
+    background:#941637;
+    transform: scale(1.05);
+}
+
+.btn-save:active, .btn-remove:active {
+    transform: scale(0.95);
+}
+/*ASSIGN MEMBER*/
+select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--color-light);
+    border-radius: var(--border-radius-1);
+    font-size: 0.88rem;
+    color: var(--color-dark-variant);
+    background-color: var(--color-white);
+    appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 0.5rem;
+}
+
+select:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+.btn-assign {
+    background: var(--color-primary);
+    color: var(--color-white);
+    padding: 0.8rem 1.9rem;
+    border: none;
+    border-radius: var(--border-radius-2); 
+    font-size: 1rem;
+    transition: background 300ms ease, transform 150ms ease;
+}
+
+.btn-assign:hover {
+    background: var(--color-primary-variant);
+    transform: scale(1.05);
+}
+
+.btn-assign:active {
+    transform: scale(0.95);
+}
+
+/*=======NOTIFICATIONS=============*/
+.notifications .recent-updates {
+    background: var(--color-white);
+    padding: var(--card-padding);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+    margin-top: 2rem;
+    text-align: left;
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    margin-top: 5rem;
+}
+
+.notifications .recent-updates h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem; 
+}
+
+.notifications .updates {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.notifications .update {
+    display: flex;
+    align-items: center;
+    background: var(--color-white);
+    padding: var(--padding-1);
+    border-radius: var(--border-radius-1);
+    width: 100%;
+    box-shadow: var(--box-shadow);
+    transition: transform 0.2s;
+    font-size: 1.4rem;
+}
+
+.notifications .update:hover {
+    transform: scale(1.02);
+}
+
+.notifications .profile-photo {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1rem;
+}
+
+.profile-photo {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    overflow: hidden;
+    float: left;
+    margin-right: 15px;
+    
+}
+
+img {
+    display: block;
+    width: 100%;
+}
+
+.notifications .message {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.notifications .message p {
+    margin: 0;
+    margin-bottom: 0.2rem; 
+}
+
+.notifications .text-muted {
+    color: var(--color-info-dark);
+    font-size: 0.9rem;
+    margin-top: 0;
+    margin: 0;
+}
+
+/* Dashboard Section Layout */
+.dashboard-section {
+  display: grid;
+  grid-template-columns: 1fr 0.1fr; /* calendar 2/3, members 1/3 raito */
+  gap: 1rem; 
+  margin-bottom: 2rem;
+}
+
+/* Members Section */
+.members {
+    background: var(--color-white);
+    padding: 0.8rem;
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+    width: 200px;
+    margin: 0 auto;
+  }
+  
+  .members h2 {
+    font-size: 1rem;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .groupList {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .groupList img {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+  
+  .groupList b {
+    font-size: 11px;
+  }
+
+/* Overview Section */
+.overview {
+  background: var(--color-white);
+  padding: var(--card-padding);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.overview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.overview th,
+.overview td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid var(--color-light);
+}
+
+.overview th {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
