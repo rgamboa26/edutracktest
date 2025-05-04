@@ -1,0 +1,228 @@
+:root {
+  --color-awit: #FFD700;
+  --color-ronwin: #072d4f; 
+  --card-border-radius: 0.9rem; 
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.maincontactall {
+  align-items: center;
+  max-width: 2400px;
+  min-width: 1600px;
+  margin: auto;
+}
+
+.map__container {
+  width: 100%;
+  height: 450px;
+}
+
+.map__container iframe {
+  width: 100%;
+  height: 50%; 
+  border: 0;
+}
+
+.mainContact {
+  text-align: center;
+  margin-top: -230px; /* Add space between the map and the heading */
+}
+
+.mainContact img {
+  align-items: center;
+  margin-bottom: -20rem;
+  margin-top: -24rem;
+  height: 700px;
+  width: 800px;
+}
+
+
+.mainContact h2 {
+  font-size: 2rem;
+  color: #fff;
+}
+
+.maincontactparent {
+  display: flex;
+  flex-direction: row; /* Align items side by side */
+  align-items: flex-start;
+  justify-content: center; 
+  width: 100%;
+  padding: 20px;
+}
+
+.maincontactcontent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  margin: -1rem auto -20rem;
+}
+
+.maincontactcontent h2 {
+  font-size: 2rem;
+  color: #fff;
+}
+
+.maincontactcontent p {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  max-width: 30rem;
+}
+
+.mottocontactparent {
+  font-size: 1.4rem;
+  color: #fff;
+  margin: 5px 0;
+  margin-top: 30px;
+  text-align: justify;
+  max-width: 30rem;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-left: 2rem;
+  margin-right: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form .form-group {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--color-ronwin);
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.contact-form button.btn-submit {
+  padding: 10px 20px;
+  background-color: var(--color-ronwin);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.contact-form button.btn-submit:hover {
+  background-color: var(--color-awit);
+}
+
+.card {
+  width: fit-content;
+  height: fit-content;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  gap: 20px;
+}
+
+.socials h2{
+  margin-top: 3rem;
+  font-size: 2rem;
+}
+
+/* for all social containers*/
+.socialContainer {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  margin-left: 2rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition-duration: 0.3s;
+  border-radius: 30px;
+}
+/* instagram*/
+.containerOne:hover {
+  background-color: #d62976;
+  transition-duration: 0.3s;
+  transform: scale(1.2);
+}
+/* twitter*/
+.containerTwo:hover {
+  background-color: #00acee;
+  transition-duration: 0.3s;
+  transform: scale(1.2);
+}
+/* linkdin*/
+.containerThree:hover {
+  background-color: #0072b1;
+  transition-duration: 0.3s;
+  transform: scale(1.2);
+}
+/* Whatsapp*/
+.containerFour:hover {
+  background-color: #128c7e;
+  transition-duration: 0.3s;
+  transform: scale(1.2);
+}
+
+.socialContainer:active {
+  transform: scale(0.9);
+  transition-duration: 0.3s;
+}
+
+.socialSvg {
+  width: 30px;
+}
+
+.socialSvg path {
+  fill: rgb(255, 255, 255);
+}
+
+.socialContainer:hover .socialSvg {
+  animation: slide-in-top 0.3s both;
+}
+
+@keyframes slide-in-top {
+  0% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
