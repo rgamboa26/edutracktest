@@ -117,22 +117,45 @@ function drop(event) {
 }
 
 function updateTaskStatus(task, columnIndex, ticketElement) {
-
     let newStatus = '';
     if (columnIndex === 0) {
         task.status = 'not-started';
-        ticketElement.className = 'box todo'; // update for new stat
+        ticketElement.className = 'box todo';
         newStatus = 'Not Started';
     } else if (columnIndex === 1) {
         task.status = 'in-progress';
         ticketElement.className = 'box in-progress'; 
         newStatus = 'In Progress';
     } else if (columnIndex === 2) {
-        task.status = 'completed';
-        ticketElement.className = 'box completed'; 
-        newStatus = 'Completed';
+        // Always force to in-progress and add to pendingReviews
+        task.status = 'in-progress';
+        ticketElement.className = 'box in-progress';
+
+        // Add to pendingReviews if not already present
+        let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
+        if (!pendingReviews.some(t => t.name === task.name)) {
+            pendingReviews.push(task);
+            localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
+        }
+
+        alert('Task is pending review and must be approved before completion.');
+
+        // Update the task in localStorage
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        const taskIndex = tasks.findIndex(t => t.name === task.name);
+        if (taskIndex !== -1) {
+            tasks[taskIndex] = task;
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Immediately re-render the overview table to reflect the change
+        if (typeof updateOverviewTable === 'function') updateOverviewTable();
+
+        // Prevent further DOM manipulation for completed column
+        return;
     }
 
+    // Update the task in localStorage for other columns
     const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     const taskIndex = tasks.findIndex(t => t.name === task.name);
     if (taskIndex !== -1) {
@@ -140,6 +163,7 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
         localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
+    if (typeof updateOverviewTable === 'function') updateOverviewTable();
 
     logTaskUpdate(task.member, task.name, newStatus);
 }

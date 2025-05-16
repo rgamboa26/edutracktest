@@ -115,19 +115,34 @@ function updateOverviewTable() {
 function loadUserTasks() {
     const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     const taskList = document.getElementById('tasks');
+    const searchInput = document.getElementById('task-search');
+    const statusFilter = document.getElementById('status-filter');
+    const currentUser = window.currentUser || localStorage.getItem('currentUser') || 'member1';
 
     if (!taskList) {
         console.error('Task list element not found!');
         return;
     }
 
-    taskList.innerHTML = '';
+    // Get filter values
+    const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const statusValue = statusFilter ? statusFilter.value : 'all';
 
-    const userTasks = tasks.filter(task => task.member === currentUser);
+    // Filter tasks for the current user
+    let userTasks = tasks.filter(task => task.member === currentUser);
+    if (searchValue) {
+        userTasks = userTasks.filter(task => task.name.toLowerCase().includes(searchValue));
+    }
+    if (statusValue !== 'all') {
+        userTasks = userTasks.filter(task => task.status === statusValue);
+    }
+
+    // Render tasks
+    taskList.innerHTML = '';
     userTasks.forEach(task => {
         const listItem = document.createElement('li');
         listItem.innerHTML = `
-            <span>${task.name} - ${task.type} - ${task.member}</span>
+            <span>${task.name} - ${task.type ? task.type : ''} - ${task.member}</span>
             <select onchange="changeTaskStatus('${task.name}', this.value)">
                 <option value="not-started" ${task.status === 'not-started' ? 'selected' : ''}>Not Started</option>
                 <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
@@ -140,12 +155,67 @@ function loadUserTasks() {
 
 function changeTaskStatus(taskName, newStatus) {
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let updatedStatus = newStatus;
+
+    if (newStatus === 'completed') {
+        // Always force to in-progress and add to pendingReviews
+        updatedStatus = 'in-progress';
+
+        let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
+        const taskObj = tasks.find(task => task.name === taskName);
+        if (taskObj && !pendingReviews.some(t => t.name === taskName)) {
+            pendingReviews.push(taskObj);
+            localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
+        }
+
+        alert('Task is pending review and must be approved before completion.');
+    }
+
     tasks = tasks.map(task => {
         if (task.name === taskName) {
-            task.status = newStatus;
+            task.status = updatedStatus;
         }
         return task;
     });
     localStorage.setItem('tasks', JSON.stringify(tasks));
-    updateOverviewTable();
+    loadUserTasks();
+    if (typeof updateOverviewTable === 'function') updateOverviewTable();
+}
+
+function updateTaskStatus(task, columnIndex, ticketElement) {
+    let newStatus = '';
+    if (columnIndex === 0) {
+        task.status = 'not-started';
+        ticketElement.className = 'box todo';
+        newStatus = 'Not Started';
+    } else if (columnIndex === 1) {
+        task.status = 'in-progress';
+        ticketElement.className = 'box in-progress';
+        newStatus = 'In Progress';
+    } else if (columnIndex === 2) {
+        // Always force to in-progress and add to pendingReviews
+        task.status = 'in-progress';
+        ticketElement.className = 'box in-progress';
+        newStatus = 'Pending Review';
+
+        // Add to pendingReviews if not already present
+        let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
+        if (!pendingReviews.some(t => t.name === task.name)) {
+            pendingReviews.push(task);
+            localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
+        }
+
+        alert('Task is pending review and must be approved before completion.');
+    }
+
+    // Update the task in localStorage
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    const taskIndex = tasks.findIndex(t => t.name === task.name);
+    if (taskIndex !== -1) {
+        tasks[taskIndex] = task;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Optionally update the UI
+    if (typeof updateOverviewTable === 'function') updateOverviewTable();
 }
