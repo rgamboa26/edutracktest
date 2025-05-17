@@ -1,0 +1,107 @@
+body {
+  background: #f5f7fa;
+}
+.messaging-container {
+  display: flex;
+  height: 80vh;
+  width: 80vw;
+  max-width: 2020px;    
+  min-width: 700px;
+  margin: 90px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+.contacts-sidebar {
+  width: 220px;
+  background: #072d4f;
+  color: #fff;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.contacts-sidebar h3 {
+  margin: 24px 0 12px 24px;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+.contact-list {
+  list-style: none;
+  padding: 0 0 0 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+.contact-list li {
+  padding: 16px 24px;
+  cursor: pointer;
+  border-bottom: 1px solid #0e3a64;
+  transition: background 0.2s;
+}
+.contact-list li.active, .contact-list li:hover {
+  background: #0e3a64;
+}
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafc;
+}
+.chat-header {
+  padding: 18px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+.messages {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.message {
+  max-width: 60%;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: #e3e9f7;
+  align-self: flex-start;
+  font-size: 1rem;
+}
+.message.me {
+  background: #1e90ff;
+  color: #fff;
+  align-self: flex-end;
+}
+.chat-input-area {
+  display: flex;
+  padding: 18px 24px;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+}
+.chat-input-area input {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+  outline: none;
+}
+.chat-input-area button {
+  margin-left: 12px;
+  padding: 10px 24px;
+  border-radius: 20px;
+  border: none;
+  background: #1e90ff;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chat-input-area button:hover {
+  background: #155fa0;
+}

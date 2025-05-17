@@ -36,7 +36,7 @@
                     <span class="material-icons-sharp">notifications</span>
                     <h3>Notifications</h3>
                 </a>
-                <a href="#">
+                <a href="inbox.html">
                     <span class="material-icons-sharp">inbox</span>
                     <h3>Inbox</h3>
                     <span class="message-count">26</span>
@@ -63,7 +63,7 @@
             <div class="recent-updates">
                 <h2>Recent Updates</h2>
                 <div class="updates">
-                    <!-- Updates load -->
+                    <!-- updates load -->
                 </div>
             </div>
         </main>
@@ -74,7 +74,7 @@
             const recentUpdates = JSON.parse(localStorage.getItem('recentUpdates')) || [];
             const updatesContainer = document.querySelector('.recent-updates .updates');
 
-            updatesContainer.innerHTML = ''; // Clear updates 
+            updatesContainer.innerHTML = ''; // clear updates 
 
             recentUpdates.forEach(update => {
                 const updateDiv = document.createElement('div');

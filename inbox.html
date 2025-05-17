@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EduTrack Student Dashboard</title>
+    <title>EduTrack Inbox</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet"/>
     <link rel="stylesheet" href="SVstyle.css" />
+    <link rel="stylesheet" href="inboxstyle.css" />
   </head>
   <body>
-    <!--SIDEBAR-->
     <div class="container">
       <aside>
         <div class="top">
@@ -31,7 +31,7 @@
             <span class="material-icons-sharp">notifications</span>
             <h3>Notifications</h3>
           </a>
-          <a href="inbox.html">
+          <a href="#" class="active">
             <span class="material-icons-sharp">inbox</span>
             <h3>Inbox</h3>
             <span class="message-count">26</span>
@@ -44,7 +44,7 @@
             <span class="material-icons-sharp">task</span>
             <h3>Tasks</h3>
           </a>
-          <a href="reviews.html" class="active">
+          <a href="reviews.html">
             <span class="material-icons-sharp">how_to_reg</span>
             <h3>Review Tasks</h3>
           </a>
@@ -54,50 +54,29 @@
           </a>
         </div>
       </aside>
-      <main>
-        <section id="pending-reviews-section">
-          <h2>Tasks Awaiting Review</h2>
-          <ul id="reviews-list"></ul>
-        </section>
-      </main>
+      <div class="messaging-container">
+        <div class="contacts-sidebar">
+          <h3>Contacts</h3>
+          <ul class="contact-list">
+            <li class="active">Zidane Condino</li>
+            <li>Rhamuel Gamboa</li>
+            <li>Elija Brent</li>
+            <li>Tim Villegas</li>
+          </ul>
+        </div>
+        <div class="chat-area">
+          <div class="chat-header">Zidane Condino</div>
+          <div class="messages" id="messages">
+            <div class="message">Hello! Any updates on your tasks?</div>
+            <div class="message me">Hi! It's in Progress.</div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" id="themessage" placeholder="Type your message..." />
+            <button id="sendmessage" type="button">Send</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <script src="reviews.js"></script>
-    <style>
-      #pending-reviews-section {
-        margin: 40px;
-        background: #fff;
-        border-radius: 10px;
-        padding: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      }
-      #reviews-list {
-        list-style: none;
-        padding: 0;
-      }
-      #reviews-list li {
-        margin-bottom: 18px;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #f5f7fa;
-        border-radius: 6px;
-        padding: 12px 18px;
-      }
-      .approve-btn {
-        margin-left: 20px;
-        padding: 6px 16px;
-        background: #1e90ff;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background 0.2s;
-      }
-      .approve-btn:hover {
-        background: #155fa0;
-      }
-    </style>
+    <script src="inbox.js"></script>
   </body>
 </html>

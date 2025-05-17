@@ -27,12 +27,12 @@ function loadPendingReviews() {
 }
 
 function approveTask(taskName) {
-  // Remove from pendingReviews
+  // remove from pending 
   let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
   pendingReviews = pendingReviews.filter(task => task.name !== taskName);
   localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
 
-  // Set status to completed in tasks
+  // set to completed in tasks
   let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
   tasks = tasks.map(task => {
     if (task.name === taskName) {

@@ -124,11 +124,11 @@ function loadUserTasks() {
         return;
     }
 
-    // Get filter values
+    // filter values
     const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : '';
     const statusValue = statusFilter ? statusFilter.value : 'all';
 
-    // Filter tasks for the current user
+    // filter task base on user
     let userTasks = tasks.filter(task => task.member === currentUser);
     if (searchValue) {
         userTasks = userTasks.filter(task => task.name.toLowerCase().includes(searchValue));
@@ -137,7 +137,6 @@ function loadUserTasks() {
         userTasks = userTasks.filter(task => task.status === statusValue);
     }
 
-    // Render tasks
     taskList.innerHTML = '';
     userTasks.forEach(task => {
         const listItem = document.createElement('li');
@@ -158,7 +157,6 @@ function changeTaskStatus(taskName, newStatus) {
     let updatedStatus = newStatus;
 
     if (newStatus === 'completed') {
-        // Always force to in-progress and add to pendingReviews
         updatedStatus = 'in-progress';
 
         let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
@@ -193,12 +191,11 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
         ticketElement.className = 'box in-progress';
         newStatus = 'In Progress';
     } else if (columnIndex === 2) {
-        // Always force to in-progress and add to pendingReviews
+
         task.status = 'in-progress';
         ticketElement.className = 'box in-progress';
         newStatus = 'Pending Review';
 
-        // Add to pendingReviews if not already present
         let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
         if (!pendingReviews.some(t => t.name === task.name)) {
             pendingReviews.push(task);
@@ -208,7 +205,6 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
         alert('Task is pending review and must be approved before completion.');
     }
 
-    // Update the task in localStorage
     const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     const taskIndex = tasks.findIndex(t => t.name === task.name);
     if (taskIndex !== -1) {
@@ -216,6 +212,5 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
         localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
-    // Optionally update the UI
     if (typeof updateOverviewTable === 'function') updateOverviewTable();
 }

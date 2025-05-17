@@ -127,11 +127,10 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
         ticketElement.className = 'box in-progress'; 
         newStatus = 'In Progress';
     } else if (columnIndex === 2) {
-        // Always force to in-progress and add to pendingReviews
+        // force in progress proceed to review
         task.status = 'in-progress';
         ticketElement.className = 'box in-progress';
 
-        // Add to pendingReviews if not already present
         let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
         if (!pendingReviews.some(t => t.name === task.name)) {
             pendingReviews.push(task);
@@ -140,7 +139,6 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
 
         alert('Task is pending review and must be approved before completion.');
 
-        // Update the task in localStorage
         const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
         const taskIndex = tasks.findIndex(t => t.name === task.name);
         if (taskIndex !== -1) {
@@ -148,14 +146,12 @@ function updateTaskStatus(task, columnIndex, ticketElement) {
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
-        // Immediately re-render the overview table to reflect the change
         if (typeof updateOverviewTable === 'function') updateOverviewTable();
 
-        // Prevent further DOM manipulation for completed column
         return;
     }
 
-    // Update the task in localStorage for other columns
+    // update task status 
     const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     const taskIndex = tasks.findIndex(t => t.name === task.name);
     if (taskIndex !== -1) {
