@@ -1,49 +1,121 @@
-document.addEventListener('DOMContentLoaded', loadPendingReviews);
+// Review workflow using IndexedDB tickets: approve pending_review -> resolved
+
+const DB_NAME = 'edutrackTickets';
+const DB_VERSION = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initDb().then(loadPendingReviews);
+});
+
+let db;
+
+function initDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(); };
+    req.onupgradeneeded = () => {
+      db = req.result;
+      if (!db.objectStoreNames.contains('tickets')) {
+        const store = db.createObjectStore('tickets', { keyPath: 'id' });
+        store.createIndex('status', 'status', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('audit')) {
+        const auditStore = db.createObjectStore('audit', { keyPath: 'entryId', autoIncrement: true });
+        auditStore.createIndex('ticketId', 'ticketId', { unique: false });
+      }
+    };
+  });
+}
+
+function tx(storeName, mode = 'readonly') {
+  return db.transaction(storeName, mode).objectStore(storeName);
+}
 
 function loadPendingReviews() {
   const reviewsList = document.getElementById('reviews-list');
   reviewsList.innerHTML = '';
-  const pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
-  const currentUser = window.currentUser || localStorage.getItem('currentUser') || 'member1';
 
-  if (pendingReviews.length === 0) {
-    reviewsList.innerHTML = '<li>No tasks are awaiting review.</li>';
-    return;
-  }
-  pendingReviews.forEach(task => {
-    const li = document.createElement('li');
-    li.textContent = `${task.name} (Assigned to: ${task.member})`;
-    if (currentUser === 'member1') {
-      const approveBtn = document.createElement('button');
-      approveBtn.textContent = 'Approve';
-      approveBtn.className = 'approve-btn';
-      approveBtn.onclick = function() {
-        approveTask(task.name);
-      };
-      li.appendChild(approveBtn);
+  getTicketsByStatus('pending_review').then((tickets) => {
+    if (!tickets.length) {
+      reviewsList.innerHTML = '<li>No tickets are awaiting review.</li>';
+      return;
     }
-    reviewsList.appendChild(li);
+
+    tickets.forEach((ticket) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div>
+          <div><strong>${ticket.title}</strong></div>
+          <div class="review-meta">${ticket.id.slice(0,8)} • Priority: ${ticket.priority} • Assignee: ${ticket.assignee?.name || 'Unassigned'}</div>
+        </div>
+      `;
+
+      const approveBtn = document.createElement('button');
+      approveBtn.textContent = 'Approve & Resolve';
+      approveBtn.className = 'approve-btn';
+      approveBtn.onclick = async function() {
+        await approveTicket(ticket.id);
+        loadPendingReviews();
+      };
+
+      li.appendChild(approveBtn);
+      reviewsList.appendChild(li);
+    });
   });
 }
 
-function approveTask(taskName) {
-  // remove from pending 
-  let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
-  pendingReviews = pendingReviews.filter(task => task.name !== taskName);
-  localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
-
-  // set to completed in tasks
-  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-  tasks = tasks.map(task => {
-    if (task.name === taskName) {
-      task.status = 'completed';
-    }
-    return task;
+async function getTicketsByStatus(status) {
+  const tickets = await new Promise((resolve, reject) => {
+    const store = tx('tickets');
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
   });
-  localStorage.setItem('tasks', JSON.stringify(tasks));
+  return tickets.filter(t => t.status === status);
+}
 
-  loadPendingReviews();
-  if (typeof updateOverviewTable === 'function') updateOverviewTable();
+async function approveTicket(ticketId) {
+  const ticket = await getTicket(ticketId);
+  if (!ticket) return;
+  const now = new Date().toISOString();
+  const history = ticket.history || [];
+  history.push({ status: 'resolved', at: now, by: 'Reviewer' });
+
+  const updated = { ...ticket, status: 'resolved', updatedAt: now, history };
+  await putTicket(updated);
+  await addAudit(ticketId, 'status:resolved', { by: { name: 'Reviewer' }, status: 'resolved' });
+}
+
+async function getTicket(id) {
+  return new Promise((resolve, reject) => {
+    const request = tx('tickets').get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function putTicket(ticket) {
+  return new Promise((resolve, reject) => {
+    const request = tx('tickets', 'readwrite').put(ticket);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function addAudit(ticketId, action, details) {
+  const entry = {
+    ticketId,
+    action,
+    details: JSON.stringify(details || {}),
+    at: new Date().toISOString(),
+    by: details?.by?.name || 'reviewer',
+  };
+  return new Promise((resolve, reject) => {
+    const request = tx('audit', 'readwrite').add(entry);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
 }
 
 

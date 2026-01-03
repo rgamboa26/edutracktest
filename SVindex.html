@@ -27,14 +27,6 @@
             <span class="material-icons-sharp">grid_view</span>
             <h3>Dashboard</h3>
           </a>
-          <a href="SVactions.html">
-            <span class="material-icons-sharp">assignment</span>
-            <h3>Actions</h3>
-          </a>
-          <a href="SVnotifications.html">
-            <span class="material-icons-sharp">notifications</span>
-            <h3>Notifications</h3>
-          </a>
           <a href="inbox.html">
             <span class="material-icons-sharp">inbox</span>
             <h3>Inbox</h3>
@@ -53,7 +45,7 @@
             <span class="material-icons-sharp">how_to_reg</span>
             <h3>Review Tasks</h3>
           </a>
-          <a href="index.html">
+          <a href="index.html" class="logout-link">
             <span class="material-icons-sharp">logout</span>
             <h3>Logout</h3>
           </a>
@@ -110,29 +102,94 @@
           </div>
         </div>
 
-        <!-- Overview Section -->
+        <!-- Tickets Section -->
         <div class="overview">
-          <h2>Tickets</h2>
-          <table>
-            <thead>
-              <tr>
-                <th id="not-started" ondrop="drop(event)" ondragover="allowDrop(event)">Not Started</th>
-                <th id="in-progress" ondrop="drop(event)" ondragover="allowDrop(event)">In-Progress</th>
-                <th id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">Completed</th>
-              </tr>
-            </thead>
-            <tbody id="overview-table-body">
-              <tr>
-                <td>
-                  <div class="ticket" id="ticket-1" draggable="true" ondragstart="drag(event)">
-                    Ticket 1
-                  </div>
-                </td>
-                <td></td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ticketing-header">
+            <h2>Tickets</h2>
+            <span id="current-user-badge" class="chip">John Carlo Bauzon (admin)</span>
+          </div>
+
+          <div class="ticket-grid">
+            <div class="card">
+              <h3>Create Ticket</h3>
+              <form id="ticket-form" class="stacked">
+                <label>Title / Subject
+                  <input type="text" name="title" required placeholder="Cannot access dashboard" />
+                </label>
+                <label>Detailed Description
+                  <textarea name="description" required placeholder="Describe the issue in detail"></textarea>
+                </label>
+                <div class="grid-2">
+                  <label>Category
+                    <input type="text" name="category" placeholder="Platform" />
+                  </label>
+                  <label>Type
+                    <select name="type">
+                      <option value="incident">Incident</option>
+                      <option value="request">Request</option>
+                      <option value="bug">Bug</option>
+                      <option value="task">Task</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="grid-2">
+                  <label>Priority
+                    <select name="priority">
+                      <option value="low">Low</option>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </label>
+                  <label>Source
+                    <select name="source">
+                      <option value="web">Web</option>
+                      <option value="email">Email</option>
+                      <option value="api">API</option>
+                      <option value="chat">Chat</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Tags / Labels (comma separated)
+                  <input type="text" name="tags" placeholder="login, auth" />
+                </label>
+                <label>Assignee (team members)
+                  <select name="assigneeId" id="assigneeId">
+                    <option value="">Unassigned</option>
+                  </select>
+                </label>
+                <label>Attachments
+                  <input type="file" name="attachments" multiple />
+                </label>
+                <button type="submit" class="btn-primary">Create Ticket</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="ticketing-header">
+              <h3>Ticket List</h3>
+              <form id="ticket-search-form" class="ticket-search">
+                <input type="text" id="ticket-search-input" placeholder="Search by Ticket ID" aria-label="Search by Ticket ID" />
+                <button type="submit" class="btn-primary btn-compact">Search</button>
+              </form>
+            </div>
+            <table class="tickets-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Assignee</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ticket-rows"></tbody>
+            </table>
+          </div>
+
         </div>
       </main>
       <!----------------END OF MAIN----------------------->
@@ -160,41 +217,36 @@
         </div>
         <!----END OF TOP------>
         <div class="recent-updates">
-          <h2>Recent Updates</h2>
-          <div class="updates">
-            <div class="update">
-              <!--
-              <div>
-                <img class="profile-photo" src="./images/tim.jpg" />
-                <p class="message">
-                  <b>Tim Villegas</b> Is currently working on the sign in page.
-                </p>
-                <small class="text-muted">2 Minutes Ago</small>
-              </div>
-            </div>
-            <div class="update">
-              <div>
-                <img class="profile-photo" src="./images/rham.jpg" />
-                <p class="message">
-                  <b>Rhamuel Gamboa</b> Finished the student view of the
-                  dashboard. Currently awaiting approval.
-                </p>
-                <small class="text-muted">5 Minutes Ago</small>
-              </div>
-            </div>
-          </div>
-          -->
+          <h2>Recent Audit Trail</h2>
+          <ul id="audit-feed" class="audit-feed"></ul>
         </div>
         <!--------END OF RECENT UPDATES-------------->
       </div>
     </div>
 
-    <!-- Member Updates Modal -->
+    <!-- Member Updates Modal (popup) -->
     <div id="member-updates-modal" class="modal">
       <div class="modal-content">
         <span class="close-button">&times;</span>
         <h2 id="modal-member-name"></h2>
         <div id="modal-updates"></div>
+      </div>
+    </div>
+
+    <!-- Audit modal (popup) -->
+    <div id="audit-modal" class="modal">
+      <div class="modal-content">
+        <span id="audit-modal-close" class="close-button">&times;</span>
+        <h2>Audit Trail</h2>
+        <div id="audit-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Ticket Detail modal (popup) -->
+    <div id="ticket-detail-modal" class="modal">
+      <div class="modal-content modal-large">
+        <span id="ticket-detail-close" class="close-button">&times;</span>
+        <div id="ticket-detail-body"></div>
       </div>
     </div>
 

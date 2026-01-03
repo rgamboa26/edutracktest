@@ -1,266 +1,516 @@
+// client-side db using IndexedDB
+
+const DB_NAME = 'edutrackTickets';
+const DB_VERSION = 1;
+const DEFAULT_USER = { name: 'John Carlo Bauzon', role: 'admin', email: 'member1@edutrack.local' };
+const MEMBERS = {
+    member1: { id: 'member1', name: 'John Carlo Bauzon', email: 'member1@edutrack.local' },
+    member2: { id: 'member2', name: 'Zidane Condino', email: 'member2@edutrack.local' },
+    member3: { id: 'member3', name: 'Rhamuel Gamboa', email: 'member3@edutrack.local' },
+    member4: { id: 'member4', name: 'Brent Tarog', email: 'member4@edutrack.local' },
+    member5: { id: 'member5', name: 'Timothy Villegas', email: 'member5@edutrack.local' },
+};
+const STATUS_FLOW = {
+    new: 'open',
+    open: 'pending_review',
+    pending_review: 'resolved',
+    resolved: 'closed',
+    closed: 'reopened',
+    reopened: 'open',
+};
+
+const ROLE_PERMISSIONS = {
+    enduser: ['create', 'update_own', 'comment'],
+    agent: ['create', 'update', 'assign', 'transition', 'comment'],
+    admin: ['create', 'update', 'assign', 'transition', 'comment', 'manage_users'],
+};
+
+let db;
+
 document.addEventListener('DOMContentLoaded', () => {
-    updateOverviewTable();
-    setupMemberClickEvents();
-    loadRecentUpdates();
+    initCurrentUser();
+    initDb().then(() => {
+        hydrateTicketTable();
+        hydrateAuditFeed();
+    });
+    populateAssigneeSelect();
+    wireUi();
 });
 
-const currentUser = 'member1'; // assume the current user is "member1"
-const members = {
-    member1: 'John Carlo Bauzon',
-    member2: 'Zidane Condino',
-    member3: 'Rhamuel Gamboa',
-    member4: 'Brent Tarog',
-    member5: 'Timothy Villegas',
-};
+function wireUi() {
+    const ticketForm = document.getElementById('ticket-form');
+    const ticketTableBody = document.getElementById('ticket-rows');
+    const searchForm = document.getElementById('ticket-search-form');
+    const searchInput = document.getElementById('ticket-search-input');
 
-const memberImages = {
-    member1: 'long.jpg',
-    member2: 'zidane.jpg',
-    member3: 'rham.jpg',
-    member4: 'brent.jpg',
-    member5: 'tim.jpg',
-};
-
-function updateOverviewTable() {
-    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    const overviewTableBody = document.querySelector('#overview-table-body');
-
-    if (overviewTableBody) {
-        overviewTableBody.innerHTML = '';
-
-        const todoTasks = tasks.filter(task => task.status === 'not-started');
-        const inProgressTasks = tasks.filter(task => task.status === 'in-progress');
-        const completedTasks = tasks.filter(task => task.status === 'completed');
-
-        const maxRows = Math.max(todoTasks.length, inProgressTasks.length, completedTasks.length);
-
-        for (let i = 0; i < maxRows; i++) {
-            const newRow = document.createElement('tr');
-
-            newRow.innerHTML = `
-                <td ondrop="drop(event)" ondragover="allowDrop(event)">
-                    ${todoTasks[i] ? `<div class="box todo" id="task-${todoTasks[i].name}" draggable="${todoTasks[i].member === currentUser}" ondragstart="drag(event)"><p class="overviewText">${todoTasks[i].name}</p></div>` : ''}
-                </td>
-                <td ondrop="drop(event)" ondragover="allowDrop(event)">
-                    ${inProgressTasks[i] ? `<div class="box in-progress" id="task-${inProgressTasks[i].name}" draggable="${inProgressTasks[i].member === currentUser}" ondragstart="drag(event)"><p class="overviewText">${inProgressTasks[i].name}</p></div>` : ''}
-                </td>
-                <td ondrop="drop(event)" ondragover="allowDrop(event)">
-                    ${completedTasks[i] ? `<div class="box completed" id="task-${completedTasks[i].name}" draggable="${completedTasks[i].member === currentUser}" ondragstart="drag(event)"><p class="overviewText">${completedTasks[i].name}</p></div>` : ''}
-                </td>
-            `;
-
-            overviewTableBody.appendChild(newRow);
-        }
-    }
-}
-
-function allowDrop(event) {
-    event.preventDefault(); // pang drop
-}
-
-function drag(event) {
-    event.dataTransfer.setData("text", event.target.id); // store drage ID
-}
-
-function drop(event) {
-    event.preventDefault();
-    const ticketId = event.dataTransfer.getData("text"); // get dragg ID
-    const ticket = document.getElementById(ticketId); // get drag
-    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    const taskName = ticketId.replace('task-', '');
-    const task = tasks.find(t => t.name === taskName);
-
-    if (!task || task.member !== currentUser) {
-        alert("You can only move tasks assigned to you.");
-        return;
-    }
-
-    const targetCell = event.target.closest('td');
-    if (!targetCell) return;
-
-    // check if column is empty
-    if (targetCell.querySelector('.box')) {
-        // find next empty row
-        let nextRow = targetCell.parentElement.nextElementSibling;
-        while (nextRow) {
-            const nextCell = nextRow.children[targetCell.cellIndex];
-            if (!nextCell.querySelector('.box')) {
-                nextCell.appendChild(ticket);
-
-                // update task status localstorage
-                updateTaskStatus(task, targetCell.cellIndex, ticket);
+    if (ticketForm) {
+        ticketForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(ticketForm);
+            const currentUser = getCurrentUser();
+            if (!hasPermission(currentUser, 'create')) {
+                alert('You do not have permission to create tickets.');
                 return;
             }
-            nextRow = nextRow.nextElementSibling;
-        }
 
-        // if no avail row, create new
-        const overviewTableBody = document.querySelector('#overview-table-body');
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td></td>
-            <td></td>
-            <td></td>
+            const attachments = await readAttachments(formData.getAll('attachments'));
+            const ticket = buildTicketPayload(formData, currentUser, attachments);
+            await createTicket(ticket);
+            ticketForm.reset();
+            populateAssigneeSelect();
+            hydrateTicketTable();
+            hydrateAuditFeed();
+        });
+    }
+
+    if (searchForm && searchInput) {
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (!query) return;
+            const match = await findTicketByIdOrPrefix(query);
+            if (match) {
+                await showTicketDetails(match.id);
+            } else {
+                alert('No ticket found for that ID.');
+            }
+        });
+    }
+
+    if (ticketTableBody) {
+        ticketTableBody.addEventListener('click', async (e) => {
+            const action = e.target.getAttribute('data-action');
+            const ticketId = e.target.getAttribute('data-id');
+            
+            // If clicking on ticket title or row (not button), show details
+            if (!action && ticketId) {
+                await showTicketDetails(ticketId);
+                return;
+            }
+            
+            if (!action || !ticketId) return;
+
+            const currentUser = getCurrentUser();
+            if (action === 'transition') {
+                await transitionTicket(ticketId, currentUser);
+                hydrateTicketTable();
+                hydrateAuditFeed();
+            } else if (action === 'reopen') {
+                await setStatus(ticketId, 'reopened', currentUser);
+                hydrateTicketTable();
+                hydrateAuditFeed();
+            } else if (action === 'audit') {
+                await showAudit(ticketId);
+            } else if (action === 'view') {
+                await showTicketDetails(ticketId);
+            }
+        });
+    }
+}
+
+function initCurrentUser() {
+    const saved = getCurrentUser();
+    localStorage.setItem('currentUser', JSON.stringify(saved));
+    renderCurrentUser(saved);
+}
+
+function getCurrentUser() {
+    return { ...DEFAULT_USER };
+}
+
+function renderCurrentUser(user) {
+    const badge = document.getElementById('current-user-badge');
+    if (badge) {
+        badge.textContent = `${user.name || 'Anonymous'} (${user.role || 'enduser'})`;
+    }
+    const nameField = document.getElementById('userName');
+    const roleField = document.getElementById('userRole');
+    if (nameField) nameField.value = user.name || '';
+    if (roleField) roleField.value = user.role || 'enduser';
+}
+
+function populateAssigneeSelect() {
+    const select = document.getElementById('assigneeId');
+    if (!select) return;
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">Unassigned</option>';
+    Object.values(MEMBERS).forEach((member) => {
+        const option = document.createElement('option');
+        option.value = member.id;
+        option.textContent = member.name;
+        select.appendChild(option);
+    });
+    if (currentValue) select.value = currentValue;
+}
+
+function hasPermission(user, permission) {
+    const role = user?.role || 'enduser';
+    return ROLE_PERMISSIONS[role]?.includes(permission);
+}
+
+async function initDb() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+            db = req.result;
+            resolve();
+        };
+        req.onupgradeneeded = () => {
+            db = req.result;
+            if (!db.objectStoreNames.contains('tickets')) {
+                const store = db.createObjectStore('tickets', { keyPath: 'id' });
+                store.createIndex('status', 'status', { unique: false });
+                store.createIndex('assignee', 'assignee.email', { unique: false });
+                store.createIndex('requester', 'requester.email', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('audit')) {
+                const auditStore = db.createObjectStore('audit', { keyPath: 'entryId', autoIncrement: true });
+                auditStore.createIndex('ticketId', 'ticketId', { unique: false });
+            }
+        };
+    });
+}
+
+function tx(storeName, mode = 'readonly') {
+    return db.transaction(storeName, mode).objectStore(storeName);
+}
+
+async function createTicket(ticket) {
+    await putTicket(ticket);
+    await addAudit(ticket.id, 'created', { by: ticket.requester, status: ticket.status });
+}
+
+async function findTicketByIdOrPrefix(query) {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return null;
+
+    // Try direct get first (full ID)
+    const direct = await getTicket(query);
+    if (direct) return direct;
+
+    // Fallback to prefix search across all tickets
+    const tickets = await getAllTickets();
+    return tickets.find(t => t.id.toLowerCase().startsWith(normalized)) || null;
+}
+
+function buildTicketPayload(formData, currentUser, attachments) {
+    const now = new Date().toISOString();
+    const assigneeId = formData.get('assigneeId');
+    const assignee = assigneeId ? getMemberById(assigneeId) : null;
+    return {
+        id: crypto.randomUUID(),
+        title: formData.get('title'),
+        description: formData.get('description'),
+        category: formData.get('category') || 'general',
+        type: formData.get('type') || 'request',
+        priority: formData.get('priority') || 'low',
+        status: 'new',
+        source: formData.get('source') || 'web',
+        tags: (formData.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean),
+        attachments,
+        requester: {
+            name: currentUser.name,
+            role: currentUser.role,
+        },
+        assignee: assignee
+            ? { id: assignee.id, name: assignee.name, email: assignee.email }
+            : null,
+        createdAt: now,
+        updatedAt: now,
+            history: [
+                { status: 'new', at: now, by: currentUser.name },
+            ],
+    };
+}
+
+async function readAttachments(files) {
+    const attachments = [];
+    for (const file of files) {
+        if (!(file instanceof File)) continue;
+        const data = await fileToDataUrl(file);
+        attachments.push({ name: file.name, type: file.type, data });
+    }
+    return attachments;
+}
+
+function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
+async function hydrateTicketTable() {
+    const tbody = document.getElementById('ticket-rows');
+    if (!tbody) return;
+    const tickets = await getAllTickets();
+    tbody.innerHTML = '';
+    tickets.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    tickets.forEach((ticket) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${ticket.id.slice(0, 8)}</td>
+            <td class="ticket-title-cell" data-id="${ticket.id}" style="cursor: pointer; color: var(--color-primary); font-weight: 500;">${ticket.title}</td>
+            <td><span class="priority-badge priority-${ticket.priority}">${ticket.priority}</span></td>
+            <td><span class="status-badge status-${ticket.status}">${ticket.status}</span></td>
+            <td>${ticket.assignee?.name || 'Unassigned'}</td>
+            <td>${new Date(ticket.updatedAt).toLocaleString()}</td>
+            <td>
+                <button class="btn-link" data-action="view" data-id="${ticket.id}">View</button>
+                <button class="btn-link" data-action="audit" data-id="${ticket.id}">Audit</button>
+                ${renderStatusButtons(ticket)}
+            </td>
         `;
-        overviewTableBody.appendChild(newRow);
-
-        const newCell = newRow.children[targetCell.cellIndex];
-        newCell.appendChild(ticket);
-
-        updateTaskStatus(task, targetCell.cellIndex, ticket);
-        return;
-    }
-
-    targetCell.appendChild(ticket);
-
-    updateTaskStatus(task, targetCell.cellIndex, ticket);
+        tbody.appendChild(tr);
+    });
 }
 
-function updateTaskStatus(task, columnIndex, ticketElement) {
-    let newStatus = '';
-    if (columnIndex === 0) {
-        task.status = 'not-started';
-        ticketElement.className = 'box todo';
-        newStatus = 'Not Started';
-    } else if (columnIndex === 1) {
-        task.status = 'in-progress';
-        ticketElement.className = 'box in-progress'; 
-        newStatus = 'In Progress';
-    } else if (columnIndex === 2) {
-        // force in progress proceed to review
-        task.status = 'in-progress';
-        ticketElement.className = 'box in-progress';
-
-        let pendingReviews = JSON.parse(localStorage.getItem('pendingReviews')) || [];
-        if (!pendingReviews.some(t => t.name === task.name)) {
-            pendingReviews.push(task);
-            localStorage.setItem('pendingReviews', JSON.stringify(pendingReviews));
-        }
-
-        alert('Task is pending review and must be approved before completion.');
-
-        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        const taskIndex = tasks.findIndex(t => t.name === task.name);
-        if (taskIndex !== -1) {
-            tasks[taskIndex] = task;
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-        }
-
-        if (typeof updateOverviewTable === 'function') updateOverviewTable();
-
-        return;
+function renderStatusButtons(ticket) {
+    const currentUser = getCurrentUser();
+    if (!hasPermission(currentUser, 'transition')) return '';
+    const next = STATUS_FLOW[ticket.status];
+    if (!next) return '';
+    if (next === 'resolved') {
+        return '<span class="status-note">Resolve via Review page</span>';
     }
-
-    // update task status 
-    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    const taskIndex = tasks.findIndex(t => t.name === task.name);
-    if (taskIndex !== -1) {
-        tasks[taskIndex] = task;
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
-    if (typeof updateOverviewTable === 'function') updateOverviewTable();
-
-    logTaskUpdate(task.member, task.name, newStatus);
+    const label = next === 'pending_review' ? 'Send for Reviewing' : `Move to ${next}`;
+    const reopenBtn = ticket.status === 'closed' ? `<button class="btn-link" data-action="reopen" data-id="${ticket.id}">Reopen</button>` : '';
+    return `
+        <button class="btn-link" data-action="transition" data-id="${ticket.id}">${label}</button>
+        ${reopenBtn}
+    `;
 }
 
-function logTaskUpdate(memberId, taskName, newStatus) {
-    const memberName = members[memberId];
-    const profileImage = memberImages[memberId] || 'default.jpg';
-    const updateMessage = ` has updated their task "${taskName}" to "${newStatus}".`;
+async function hydrateAuditFeed() {
+    const feed = document.getElementById('audit-feed');
+    if (!feed) return;
+    const entries = await getRecentAudit();
+    feed.innerHTML = '';
+    entries.forEach((entry) => {
+        const li = document.createElement('li');
+        li.textContent = `[${new Date(entry.at).toLocaleString()}] Ticket ${entry.ticketId.slice(0, 8)}: ${entry.action}`;
+        feed.appendChild(li);
+    });
+}
 
-    // add to recent updates
-    const recentUpdates = document.querySelector('.recent-updates .updates');
-    const updateDiv = document.createElement('div');
-    updateDiv.classList.add('update');
-    updateDiv.innerHTML = `
-        <div>
-            <img class="profile-photo" src="./images/${profileImage}" />
-            <p class="message">
-                <b>${memberName}</b> ${updateMessage}
-            </p>
-            <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+async function showAudit(ticketId) {
+    const modal = document.getElementById('audit-modal');
+    const body = document.getElementById('audit-modal-body');
+    if (!modal || !body) return;
+    const entries = await getAuditForTicket(ticketId);
+    body.innerHTML = entries
+        .map((e) => `<p><strong>${new Date(e.at).toLocaleString()}</strong> - ${e.action} by ${e.by || 'system'} ${e.details ? `(${e.details})` : ''}</p>`)
+        .join('') || '<p>No audit records yet.</p>';
+    modal.style.display = 'block';
+    const close = document.getElementById('audit-modal-close');
+    close.onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
+}
+
+async function showTicketDetails(ticketId) {
+    const modal = document.getElementById('ticket-detail-modal');
+    const body = document.getElementById('ticket-detail-body');
+    if (!modal || !body) return;
+    
+    const ticket = await getTicket(ticketId);
+    if (!ticket) return;
+    
+    const tagsHtml = ticket.tags?.length 
+        ? ticket.tags.map(tag => `<span class="tag-chip">${tag}</span>`).join('')
+        : '<em>No tags</em>';
+    
+    const attachmentsHtml = ticket.attachments?.length
+        ? ticket.attachments.map(att => `
+            <div class="attachment-item">
+                <span class="material-icons-sharp">attach_file</span>
+                <a href="${att.data}" download="${att.name}">${att.name}</a>
+            </div>
+        `).join('')
+        : '<em>No attachments</em>';
+    
+    const historyHtml = ticket.history?.length
+        ? ticket.history.map(h => `
+            <div class="history-item">
+                <strong>${new Date(h.at).toLocaleString()}</strong> - Status changed to <span class="status-badge status-${h.status}">${h.status}</span> by ${h.by}
+            </div>
+        `).join('')
+        : '<em>No history</em>';
+    
+    body.innerHTML = `
+        <div class="ticket-detail-header">
+            <h2>${ticket.title}</h2>
+            <span class="status-badge status-${ticket.status}">${ticket.status}</span>
+        </div>
+        
+        <div class="ticket-detail-grid">
+            <div class="detail-section">
+                <label>Ticket ID</label>
+                <p>${ticket.id}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Priority</label>
+                <p><span class="priority-badge priority-${ticket.priority}">${ticket.priority}</span></p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Type</label>
+                <p>${ticket.type}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Category</label>
+                <p>${ticket.category}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Source</label>
+                <p>${ticket.source}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Created</label>
+                <p>${new Date(ticket.createdAt).toLocaleString()}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Updated</label>
+                <p>${new Date(ticket.updatedAt).toLocaleString()}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Requester</label>
+                <p>${ticket.requester.name}</p>
+            </div>
+            
+            <div class="detail-section">
+                <label>Assignee</label>
+                <p>${ticket.assignee ? `${ticket.assignee.name} (${ticket.assignee.email})` : 'Unassigned'}</p>
+            </div>
+        </div>
+        
+        <div class="detail-section-full">
+            <label>Description</label>
+            <div class="description-box">${ticket.description}</div>
+        </div>
+        
+        <div class="detail-section-full">
+            <label>Tags</label>
+            <div class="tags-container">${tagsHtml}</div>
+        </div>
+        
+        <div class="detail-section-full">
+            <label>Attachments</label>
+            <div class="attachments-container">${attachmentsHtml}</div>
+        </div>
+        
+        <div class="detail-section-full">
+            <label>History</label>
+            <div class="history-container">${historyHtml}</div>
         </div>
     `;
-    recentUpdates.prepend(updateDiv);
-
-    // member updates
-    const memberUpdates = JSON.parse(localStorage.getItem('memberUpdates')) || {};
-    if (!memberUpdates[memberId]) {
-        memberUpdates[memberId] = [];
-    }
-    memberUpdates[memberId].push(updateMessage);
-    localStorage.setItem('memberUpdates', JSON.stringify(memberUpdates));
-
-    const allRecentUpdates = JSON.parse(localStorage.getItem('recentUpdates')) || [];
-    allRecentUpdates.unshift({
-        memberId,
-        memberName,
-        message: updateMessage,
-        time: new Date().toLocaleTimeString(),
-        profileImage,
-    });
-    localStorage.setItem('recentUpdates', JSON.stringify(allRecentUpdates));
+    
+    modal.style.display = 'block';
+    const close = document.getElementById('ticket-detail-close');
+    close.onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
 }
 
-function loadRecentUpdates() {
-    const recentUpdates = JSON.parse(localStorage.getItem('recentUpdates')) || [];
-    const updatesContainer = document.querySelector('.recent-updates .updates');
+async function transitionTicket(ticketId, actor) {
+    const ticket = await getTicket(ticketId);
+    if (!ticket) return;
+    const nextStatus = STATUS_FLOW[ticket.status];
+    if (!nextStatus) return;
+    await setStatus(ticketId, nextStatus, actor);
+}
 
-    updatesContainer.innerHTML = ''; 
+async function setStatus(ticketId, status, actor) {
+    const ticket = await getTicket(ticketId);
+    if (!ticket) return;
+    const now = new Date().toISOString();
+    const history = ticket.history || [];
+    history.push({ status, at: now, by: actor.email || actor.name });
+    await updateTicket(ticketId, { status, updatedAt: now, history });
+    await addAudit(ticketId, `status:${status}`, { by: actor, status });
+}
 
-    recentUpdates.forEach(update => {
-        const updateDiv = document.createElement('div');
-        updateDiv.classList.add('update');
-        updateDiv.innerHTML = `
-            <div>
-                <img class="profile-photo" src="./images/${update.profileImage}" />
-                <p class="message">
-                    <b>${update.memberName}</b> ${update.message}
-                </p>
-                <small class="text-muted">${update.time}</small>
-            </div>
-        `;
-        updatesContainer.appendChild(updateDiv);
+async function putTicket(ticket) {
+    return new Promise((resolve, reject) => {
+        const request = tx('tickets', 'readwrite').put(ticket);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
     });
 }
 
-function setupMemberClickEvents() {
-    const groupListItems = document.querySelectorAll('.groupList');
-    const modal = document.getElementById('member-updates-modal');
-    const modalMemberName = document.getElementById('modal-member-name');
-    const modalUpdates = document.getElementById('modal-updates');
-    const closeButton = document.querySelector('.close-button');
+async function updateTicket(id, patch) {
+    const ticket = await getTicket(id);
+    if (!ticket) return;
+    const updated = { ...ticket, ...patch };
+    await putTicket(updated);
+}
 
-    groupListItems.forEach((item, index) => {
-        item.addEventListener('click', () => {
-            const memberId = `member${index + 1}`;
-            const memberUpdates = JSON.parse(localStorage.getItem('memberUpdates')) || {};
-            const updates = memberUpdates[memberId] || [];
-
-            // latest first
-            const reversedUpdates = updates.slice().reverse();
-
-            // modal contnet
-            modalMemberName.textContent = `Updates for ${members[memberId]}`;
-            modalUpdates.innerHTML = reversedUpdates.length
-                ? reversedUpdates.map(update => `<p>${update}</p>`).join('')
-                : '<p>No updates available.</p>';
-
-            // Show modal
-            modal.style.display = 'block';
-        });
+async function getTicket(id) {
+    return new Promise((resolve, reject) => {
+        const request = tx('tickets').get(id);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
     });
+}
 
-    // close modal
-    closeButton.addEventListener('click', () => {
-        modal.style.display = 'none';
+async function getAllTickets() {
+    return new Promise((resolve, reject) => {
+        const request = tx('tickets').getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
     });
+}
 
-    // close modal
-    window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
+async function addAudit(ticketId, action, details) {
+    const entry = {
+        ticketId,
+        action,
+        details: JSON.stringify(details || {}),
+        at: new Date().toISOString(),
+        by: details?.by?.name || 'system',
+    };
+    return new Promise((resolve, reject) => {
+        const request = tx('audit', 'readwrite').add(entry);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function getMemberById(id) {
+    return MEMBERS[id] || null;
+}
+
+async function getAuditForTicket(ticketId) {
+    return new Promise((resolve, reject) => {
+        const store = tx('audit');
+        const index = store.index('ticketId');
+        const request = index.getAll(ticketId);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function getRecentAudit(limit = 10) {
+    return new Promise((resolve, reject) => {
+        const store = tx('audit');
+        const entries = [];
+        const cursorReq = store.openCursor(null, 'prev');
+        cursorReq.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor && entries.length < limit) {
+                entries.push(cursor.value);
+                cursor.continue();
+            } else {
+                resolve(entries);
+            }
+        };
+        cursorReq.onerror = () => reject(cursorReq.error);
     });
 }
