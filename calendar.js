@@ -65,7 +65,8 @@ document.addEventListener("DOMContentLoaded", function () {
             dateSpan.textContent = displayDate;
             dayCell.appendChild(dateSpan);
 
-            const cellKey = cellDate.toISOString().split("T")[0];
+            // Convert to YYYY-MM-DD format without timezone conversion
+            const cellKey = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
             if (events[cellKey]) {
                 events[cellKey].forEach((event) => {
                     const eventDiv = document.createElement("div");
@@ -95,4 +96,11 @@ document.addEventListener("DOMContentLoaded", function () {
     generateCalendar(currentDate);
     // Call generateCalendar after adding or removing tasks
     generateCalendar(new Date());
+    
+    // Listen for calendar update events (e.g., from ticket creation)
+    window.addEventListener('calendarUpdate', () => {
+        events = {}; // Clear the cached events
+        loadEvents(); // Reload from localStorage
+        generateCalendar(currentDate);
+    });
 });

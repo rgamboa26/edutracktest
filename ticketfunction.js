@@ -60,6 +60,8 @@ function wireUi() {
             populateAssigneeSelect();
             hydrateTicketTable();
             hydrateAuditFeed();
+            // Trigger calendar refresh
+            window.dispatchEvent(new CustomEvent('calendarUpdate'));
         });
     }
 
@@ -82,7 +84,6 @@ function wireUi() {
             const action = e.target.getAttribute('data-action');
             const ticketId = e.target.getAttribute('data-id');
             
-            // If clicking on ticket title or row (not button), show details
             if (!action && ticketId) {
                 await showTicketDetails(ticketId);
                 return;
@@ -179,17 +180,26 @@ function tx(storeName, mode = 'readonly') {
 async function createTicket(ticket) {
     await putTicket(ticket);
     await addAudit(ticket.id, 'created', { by: ticket.requester, status: ticket.status });
+    
+    // Add ticket due date to calendar
+    if (ticket.dueDate) {
+        const events = JSON.parse(localStorage.getItem('events')) || {};
+        const dueDateKey = ticket.dueDate; // Already in YYYY-MM-DD format
+        if (!events[dueDateKey]) {
+            events[dueDateKey] = [];
+        }
+        events[dueDateKey].push(`Ticket: ${ticket.title}`);
+        localStorage.setItem('events', JSON.stringify(events));
+    }
 }
 
 async function findTicketByIdOrPrefix(query) {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return null;
 
-    // Try direct get first (full ID)
     const direct = await getTicket(query);
     if (direct) return direct;
 
-    // Fallback to prefix search across all tickets
     const tickets = await getAllTickets();
     return tickets.find(t => t.id.toLowerCase().startsWith(normalized)) || null;
 }
@@ -206,7 +216,7 @@ function buildTicketPayload(formData, currentUser, attachments) {
         type: formData.get('type') || 'request',
         priority: formData.get('priority') || 'low',
         status: 'new',
-        source: formData.get('source') || 'web',
+        dueDate: formData.get('dueDate') || '',
         tags: (formData.get('tags') || '').split(',').map(t => t.trim()).filter(Boolean),
         attachments,
         requester: {
@@ -261,7 +271,6 @@ async function hydrateTicketTable() {
             <td>
                 <button class="btn-link" data-action="view" data-id="${ticket.id}">View</button>
                 <button class="btn-link" data-action="audit" data-id="${ticket.id}">Audit</button>
-                ${renderStatusButtons(ticket)}
             </td>
         `;
         tbody.appendChild(tr);
@@ -339,10 +348,31 @@ async function showTicketDetails(ticketId) {
         `).join('')
         : '<em>No history</em>';
     
+    // Generate action buttons
+    const currentUser = getCurrentUser();
+    let actionButtonsHtml = '';
+    if (hasPermission(currentUser, 'transition')) {
+        const next = STATUS_FLOW[ticket.status];
+        if (next && next !== 'resolved') {
+            const label = next === 'pending_review' ? 'Send for Reviewing' : `Move to ${next}`;
+            actionButtonsHtml += `<button class="btn-primary" data-modal-action="transition" data-id="${ticket.id}">${label}</button>`;
+        }
+        if (next === 'resolved') {
+            actionButtonsHtml += '<span class="status-note">Resolve via Review page</span>';
+        }
+        if (ticket.status === 'closed') {
+            actionButtonsHtml += `<button class="btn-primary" data-modal-action="reopen" data-id="${ticket.id}">Reopen</button>`;
+        }
+    }
+    
     body.innerHTML = `
         <div class="ticket-detail-header">
             <h2>${ticket.title}</h2>
             <span class="status-badge status-${ticket.status}">${ticket.status}</span>
+        </div>
+        
+        <div class="ticket-actions" style="margin: 1rem 0; display: flex; gap: 0.5rem;">
+            ${actionButtonsHtml}
         </div>
         
         <div class="ticket-detail-grid">
@@ -367,8 +397,8 @@ async function showTicketDetails(ticketId) {
             </div>
             
             <div class="detail-section">
-                <label>Source</label>
-                <p>${ticket.source}</p>
+                <label>Due Date</label>
+                <p>${ticket.dueDate || 'No due date set'}</p>
             </div>
             
             <div class="detail-section">
@@ -394,7 +424,8 @@ async function showTicketDetails(ticketId) {
         
         <div class="detail-section-full">
             <label>Description</label>
-            <div class="description-box">${ticket.description}</div>
+            <textarea id="ticket-description-edit" class="description-edit" style="width: 100%; min-height: 100px; padding: 0.5rem; font-family: inherit; border: 1px solid var(--color-info-dark); border-radius: 4px;">${ticket.description}</textarea>
+            <button class="btn-primary" data-modal-action="save-description" data-id="${ticket.id}" style="margin-top: 0.5rem;">Save Description</button>
         </div>
         
         <div class="detail-section-full">
@@ -414,6 +445,52 @@ async function showTicketDetails(ticketId) {
     `;
     
     modal.style.display = 'block';
+    
+    // Add event listeners for action buttons in modal
+    const actionButtons = body.querySelectorAll('[data-modal-action]');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const action = e.target.getAttribute('data-modal-action');
+            const ticketId = e.target.getAttribute('data-id');
+            const currentUser = getCurrentUser();
+            
+            if (action === 'transition') {
+                await transitionTicket(ticketId, currentUser);
+                hydrateTicketTable();
+                hydrateAuditFeed();
+                // Refresh the modal with updated ticket details
+                await showTicketDetails(ticketId);
+            } else if (action === 'reopen') {
+                await setStatus(ticketId, 'reopened', currentUser);
+                hydrateTicketTable();
+                hydrateAuditFeed();
+                // Refresh the modal with updated ticket details
+                await showTicketDetails(ticketId);
+            } else if (action === 'save-description') {
+                const descriptionTextarea = document.getElementById('ticket-description-edit');
+                const newDescription = descriptionTextarea.value;
+                const oldTicket = await getTicket(ticketId);
+                
+                if (newDescription !== oldTicket.description) {
+                    await updateTicket(ticketId, { 
+                        description: newDescription, 
+                        updatedAt: new Date().toISOString() 
+                    });
+                    await addAudit(ticketId, 'description updated', { 
+                        by: currentUser, 
+                        old: oldTicket.description.substring(0, 50) + '...', 
+                        new: newDescription.substring(0, 50) + '...' 
+                    });
+                    hydrateTicketTable();
+                    hydrateAuditFeed();
+                    // Refresh the modal with updated ticket details
+                    await showTicketDetails(ticketId);
+                    alert('Description updated successfully!');
+                }
+            }
+        });
+    });
+    
     const close = document.getElementById('ticket-detail-close');
     close.onclick = () => { modal.style.display = 'none'; };
     window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
