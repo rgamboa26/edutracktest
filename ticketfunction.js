@@ -2,7 +2,7 @@
 
 const DB_NAME = 'edutrackTickets';
 const DB_VERSION = 1;
-const DEFAULT_USER = { name: 'John Carlo Bauzon', role: 'admin', email: 'member1@edutrack.local' };
+const DEFAULT_USER = { name: '4th Year', role: 'admin', email: 'member1@edutrack.local' };
 const MEMBERS = {
     member1: { id: 'member1', name: 'John Carlo Bauzon', email: 'member1@edutrack.local' },
     member2: { id: 'member2', name: 'Zidane Condino', email: 'member2@edutrack.local' },
@@ -228,6 +228,7 @@ function buildTicketPayload(formData, currentUser, attachments) {
             : null,
         createdAt: now,
         updatedAt: now,
+        descriptionUpdates: [],
             history: [
                 { status: 'new', at: now, by: currentUser.name },
             ],
@@ -347,6 +348,20 @@ async function showTicketDetails(ticketId) {
             </div>
         `).join('')
         : '<em>No history</em>';
+
+    const descriptionUpdates = ticket.descriptionUpdates || [];
+    const descriptionUpdatesHtml = descriptionUpdates.length
+        ? descriptionUpdates
+            .slice()
+            .reverse()
+            .map((entry) => `
+                <div class="update-log-item">
+                    <div class="update-log-time">${new Date(entry.updatedAt).toLocaleString()}</div>
+                    <p class="update-line"><strong>Update Note:</strong></p>
+                    <p class="update-line">${formatUpdateNote(entry.updateNote || buildLegacyUpdateNote(entry))}</p>
+                </div>
+            `).join('')
+        : '<em>No description updates yet.</em>';
     
     // Generate action buttons
     const currentUser = getCurrentUser();
@@ -425,7 +440,17 @@ async function showTicketDetails(ticketId) {
         <div class="detail-section-full">
             <label>Description</label>
             <textarea id="ticket-description-edit" class="description-edit" style="width: 100%; min-height: 100px; padding: 0.5rem; font-family: inherit; border: 1px solid var(--color-info-dark); border-radius: 4px;">${ticket.description}</textarea>
-            <button class="btn-primary" data-modal-action="save-description" data-id="${ticket.id}" style="margin-top: 0.5rem;">Save Description</button>
+            <div class="description-update-form">
+                <label for="ticket-update-note">Updates</label>
+                <textarea id="ticket-update-note" class="description-edit" style="width: 100%; min-height: 160px; padding: 0.5rem; font-family: inherit; border: 1px solid var(--color-info-dark); border-radius: 4px;" placeholder="Update: Fix Update Section\nNext Step: Check if properly working\nWho: John Carlo\nCurrent/Final Business Impact: Low"></textarea>
+
+                <button class="btn-primary" data-modal-action="save-description-update" data-id="${ticket.id}" style="margin-top: 0.75rem;">Save Description Update</button>
+            </div>
+        </div>
+
+        <div class="detail-section-full">
+            <label>Description Updates</label>
+            <div class="updates-log-container">${descriptionUpdatesHtml}</div>
         </div>
         
         <div class="detail-section-full">
@@ -466,27 +491,52 @@ async function showTicketDetails(ticketId) {
                 hydrateAuditFeed();
                 // Refresh the modal with updated ticket details
                 await showTicketDetails(ticketId);
-            } else if (action === 'save-description') {
+            } else if (action === 'save-description-update') {
                 const descriptionTextarea = document.getElementById('ticket-description-edit');
-                const newDescription = descriptionTextarea.value;
+                const newDescription = descriptionTextarea.value.trim();
+                const updateNote = document.getElementById('ticket-update-note')?.value.trim() || '';
                 const oldTicket = await getTicket(ticketId);
-                
-                if (newDescription !== oldTicket.description) {
-                    await updateTicket(ticketId, { 
-                        description: newDescription, 
-                        updatedAt: new Date().toISOString() 
-                    });
-                    await addAudit(ticketId, 'description updated', { 
-                        by: currentUser, 
-                        old: oldTicket.description.substring(0, 50) + '...', 
-                        new: newDescription.substring(0, 50) + '...' 
-                    });
-                    hydrateTicketTable();
-                    hydrateAuditFeed();
-                    // Refresh the modal with updated ticket details
-                    await showTicketDetails(ticketId);
-                    alert('Description updated successfully!');
+                const oldDescription = (oldTicket.description || '').trim();
+
+                const hasDescriptionChange = newDescription !== oldDescription;
+                const hasLogContent = Boolean(updateNote);
+
+                if (!hasDescriptionChange && !hasLogContent) {
+                    alert('No changes to save.');
+                    return;
                 }
+
+                if (!updateNote) {
+                    alert('Please add an update note before saving.');
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                const descriptionUpdates = oldTicket.descriptionUpdates || [];
+                descriptionUpdates.push({
+                    updatedAt: now,
+                    updateNote,
+                });
+                
+                await updateTicket(ticketId, {
+                    description: newDescription,
+                    updatedAt: now,
+                    descriptionUpdates,
+                });
+
+                await addAudit(ticketId, 'description updated', {
+                    by: currentUser,
+                    updateNote,
+                    old: (oldTicket.description || '').substring(0, 50),
+                    new: newDescription.substring(0, 50),
+                    updatedAt: now,
+                });
+
+                hydrateTicketTable();
+                hydrateAuditFeed();
+                // Refresh the modal with updated ticket details
+                await showTicketDetails(ticketId);
+                alert('Description update saved successfully!');
             }
         });
     });
@@ -590,4 +640,17 @@ async function getRecentAudit(limit = 10) {
         };
         cursorReq.onerror = () => reject(cursorReq.error);
     });
+}
+
+function buildLegacyUpdateNote(entry) {
+    const lines = [];
+    if (entry?.update) lines.push(`Update: ${entry.update}`);
+    if (entry?.nextStep) lines.push(`Next Step: ${entry.nextStep}`);
+    if (entry?.who) lines.push(`Who: ${entry.who}`);
+    if (entry?.businessImpact) lines.push(`Current/Final Business Impact: ${entry.businessImpact}`);
+    return lines.join('<br>');
+}
+
+function formatUpdateNote(note) {
+    return String(note || '').replace(/\n/g, '<br>');
 }
